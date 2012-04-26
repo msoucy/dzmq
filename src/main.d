@@ -5,7 +5,8 @@ import zmq;
 import dzmq;
 
 void cmain() {
-	void *context = zmq_init(1);
+	//void *context = zmq_init(1);
+	Context context = new Context(1);
 	
 	// Socket to talk to server
 	printf("Connecting to hello world server…\n");
@@ -28,12 +29,13 @@ void cmain() {
 		zmq_msg_close (&reply);
 	}
 	zmq_close (requester);
-	zmq_term (context);
+	//zmq_term (context);
 }
 
 void smain()
 {
-	void *context = zmq_init (1);
+	//void *context = zmq_init (1);
+	Context context = new Context(1);
 	
 	// Socket to talk to clients
 	void *responder = zmq_socket (context, ZMQ_REP);
@@ -60,7 +62,7 @@ void smain()
 	}
 	// We never get here but if we did, this would be how we end
 	zmq_close (responder);
-	zmq_term (context);
+	//zmq_term (context);
 }
 
 void main(string[] argv) {
