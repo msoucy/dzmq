@@ -1,4 +1,4 @@
-module dzmq.dzmq;
+module dzmq;
 
 private import zmq;
 
