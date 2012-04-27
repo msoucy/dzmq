@@ -3,6 +3,7 @@ module dzmq;
 private import zmq;
 
 import std.string;
+import std.conv;
 
 
 void fillmessage(void* destination, string data, int size) {
@@ -46,11 +47,16 @@ class Socket {
 	
 	private {
 		void* socket;
-		void fillmessage(void* destination, string data) {
-			int i=0;
+		void msg_pack(void* destination, string data) {
+			size_t i=0;
 			while(i < data.length){
 				*cast(char*)(destination++) = data[i++];
 			}
+		}
+		string msg_unpack(zmq_msg_t msg) {
+			size_t i=zmq_msg_size(&msg);
+			string ret=to!string(zmq_msg_data(&msg)[0..i]);
+			return ret;
 		}
 	}
 	
@@ -61,43 +67,279 @@ class Socket {
 		zmq_close(this.socket);
  	}
 	
-	int bind(string addr) {
+	void bind(string addr) {
 		if(zmq_bind (this.socket, addr.toStringz) != 0) {
 			throw new ZMQError();
-		} else {
-			return 0;
 		}
 	}
-	int connect(string endpoint) {
+	void connect(string endpoint) {
 		if(zmq_connect(this.socket, endpoint.toStringz) != 0) {
 			throw new ZMQError();
-		} else {
-			return 0;
 		}
 	}
-	int send(string msg, int flags) {
+	void send(string msg, int flags=0) {
 		zmq_msg_t zmsg;
 		zmq_msg_init_size(&zmsg, msg.length);
-		fillmessage(zmq_msg_data (&zmsg), msg);
+		msg_pack(zmq_msg_data (&zmsg), msg);
 		auto err = zmq_send(this.socket, &zmsg, flags);
 		zmq_msg_close (&zmsg);
 		if(err != 0) {
 			throw new ZMQError();
-		} else {
-			return 0;
 		}
 	}
-	int recv(int flags) {
+	string recv(int flags=0) {
 		zmq_msg_t zmsg;
 		zmq_msg_init(&zmsg);
 		auto err = zmq_recv(this.socket, &zmsg, flags);
+		string ret = msg_unpack(zmsg);
 		zmq_msg_close(&zmsg);
 		if(err != 0) {
 			throw new ZMQError();
 		} else {
-			return 0;
+			return ret;
 		}
 	}
+	
+	@property {
+		// High water mark
+		void hwm(ulong value) {
+			if(zmq_setsockopt(this.socket, ZMQ_HWM, &value, ulong.sizeof)) {
+				throw new ZMQError();
+			}
+		}
+		ulong hwm() {
+			ulong ret;
+			size_t size;
+			if(zmq_getsockopt(this.socket, ZMQ_HWM, &ret, &size)) {
+				throw new ZMQError();
+			} else {
+				return ret;
+			}
+		}
+		
+		// Swap: Set disk offload size
+		void swap(long value) {
+			if(zmq_setsockopt(this.socket, ZMQ_SWAP, &value, long.sizeof)) {
+				throw new ZMQError();
+			}
+		}
+		long swap() {
+			long ret;
+			size_t size;
+			if(zmq_getsockopt(this.socket, ZMQ_SWAP, &ret, &size)) {
+				throw new ZMQError();
+			} else {
+				return ret;
+			}
+		}
+		
+		// Affinity: I/O thread affinity
+		void affinity(ulong value) {
+			if(zmq_setsockopt(this.socket, ZMQ_AFFINITY, &value, ulong.sizeof)) {
+				throw new ZMQError();
+			}
+		}
+		ulong affinity() {
+			ulong ret;
+			size_t size;
+			if(zmq_getsockopt(this.socket, ZMQ_AFFINITY, &ret, &size)) {
+				throw new ZMQError();
+			} else {
+				return ret;
+			}
+		}
+		
+		// Rate: multicast data rate
+		void rate(long value) {
+			if(zmq_setsockopt(this.socket, ZMQ_RATE, &value, long.sizeof)) {
+				throw new ZMQError();
+			}
+		}
+		long rate() {
+			long ret;
+			size_t size;
+			if(zmq_getsockopt(this.socket, ZMQ_RATE, &ret, &size)) {
+				throw new ZMQError();
+			} else {
+				return ret;
+			}
+		}
+		
+		// Multicast recovery interval
+		void rec_ivl(long value) {
+			if(zmq_setsockopt(this.socket, ZMQ_RECOVERY_IVL, &value, long.sizeof)) {
+				throw new ZMQError();
+			}
+		}
+		long rec_ivl() {
+			long ret;
+			size_t size;
+			if(zmq_getsockopt(this.socket, ZMQ_RECOVERY_IVL, &ret, &size)) {
+				throw new ZMQError();
+			} else {
+				return ret;
+			}
+		}
+		void rec_ivl_msec(long value) {
+			if(zmq_setsockopt(this.socket, ZMQ_RECOVERY_IVL_MSEC, &value, long.sizeof)) {
+				throw new ZMQError();
+			}
+		}
+		long rec_ivl_msec() {
+			long ret;
+			size_t size;
+			if(zmq_getsockopt(this.socket, ZMQ_RECOVERY_IVL_MSEC, &ret, &size)) {
+				throw new ZMQError();
+			} else {
+				return ret;
+			}
+		}
+		
+		// Multicast loopback
+		void mcast(long value) {
+			if(zmq_setsockopt(this.socket, ZMQ_MCAST_LOOP, &value, long.sizeof)) {
+				throw new ZMQError();
+			}
+		}
+		long mcast() {
+			long ret;
+			size_t size;
+			if(zmq_getsockopt(this.socket, ZMQ_MCAST_LOOP, &ret, &size)) {
+				throw new ZMQError();
+			} else {
+				return ret;
+			}
+		}
+		
+		// Kernel transmit buffer size
+		void sndbuf(ulong value) {
+			if(zmq_setsockopt(this.socket, ZMQ_SNDBUF, &value, ulong.sizeof)) {
+				throw new ZMQError();
+			}
+		}
+		ulong sndbuf() {
+			ulong ret;
+			size_t size;
+			if(zmq_getsockopt(this.socket, ZMQ_SNDBUF, &ret, &size)) {
+				throw new ZMQError();
+			} else {
+				return ret;
+			}
+		}
+		
+		// Kernel receive buffer size
+		void rdvbuf(ulong value) {
+			if(zmq_setsockopt(this.socket, ZMQ_RCVBUF, &value, ulong.sizeof)) {
+				throw new ZMQError();
+			}
+		}
+		ulong rcvbuf() {
+			ulong ret;
+			size_t size;
+			if(zmq_getsockopt(this.socket, ZMQ_RCVBUF, &ret, &size)) {
+				throw new ZMQError();
+			} else {
+				return ret;
+			}
+		}
+		
+		// Socket shutdown linger period
+		void linger(int value) {
+			if(zmq_setsockopt(this.socket, ZMQ_LINGER, &value, int.sizeof)) {
+				throw new ZMQError();
+			}
+		}
+		int linger() {
+			int ret;
+			size_t size;
+			if(zmq_getsockopt(this.socket, ZMQ_LINGER, &ret, &size)) {
+				throw new ZMQError();
+			} else {
+				return ret;
+			}
+		}
+		
+		// Reconnection interval
+		void reconnect_ivl(int value) {
+			if(zmq_setsockopt(this.socket, ZMQ_RECONNECT_IVL, &value, int.sizeof)) {
+				throw new ZMQError();
+			}
+		}
+		int reconnect_ivl() {
+			int ret;
+			size_t size;
+			if(zmq_getsockopt(this.socket, ZMQ_RECONNECT_IVL, &ret, &size)) {
+				throw new ZMQError();
+			} else {
+				return ret;
+			}
+		}
+		
+		// Maximum reconnection interval
+		void reconnect_ivl_max(int value) {
+			if(zmq_setsockopt(this.socket, ZMQ_RECONNECT_IVL_MAX, &value, int.sizeof)) {
+				throw new ZMQError();
+			}
+		}
+		int reconnect_ivl_max() {
+			int ret;
+			size_t size;
+			if(zmq_getsockopt(this.socket, ZMQ_RECONNECT_IVL_MAX, &ret, &size)) {
+				throw new ZMQError();
+			} else {
+				return ret;
+			}
+		}
+		
+		// Maximum reconnection interval
+		void backlog(int value) {
+			if(zmq_setsockopt(this.socket, ZMQ_BACKLOG, &value, int.sizeof)) {
+				throw new ZMQError();
+			}
+		}
+		int backlog() {
+			int ret;
+			size_t size;
+			if(zmq_getsockopt(this.socket, ZMQ_BACKLOG, &ret, &size)) {
+				throw new ZMQError();
+			} else {
+				return ret;
+			}
+		}
+		
+		// Socket identity
+		void identity(string value) {
+			if(zmq_setsockopt(this.socket, ZMQ_IDENTITY, cast(void*)value.toStringz, value.length)) {
+				throw new ZMQError();
+			}
+		}
+		string identity() {
+			string ret;
+			size_t size;
+			auto err = zmq_getsockopt(this.socket, ZMQ_IDENTITY, &ret, &size);
+			if(err) {
+				throw new ZMQError();
+			} else {
+				return ret;
+			}
+		}
+		
+		// TODO: ZMQ_FD, ZMQ_events
+		
+	}
+	
+	// Subscribe and unsubscribe
+	void subscribe(string value) {
+		if(zmq_setsockopt(this.socket, ZMQ_SUBSCRIBE, cast(void*)value.toStringz, value.length)) {
+			throw new ZMQError();
+		}
+	}
+	void unsubscribe(string value) {
+		if(zmq_setsockopt(this.socket, ZMQ_SUBSCRIBE, cast(void*)value.toStringz, value.length)) {
+			throw new ZMQError();
+		}
+	}
+	
 }
 
 class ZMQError : Error {
