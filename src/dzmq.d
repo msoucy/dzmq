@@ -77,6 +77,7 @@ class Socket {
 			throw new ZMQError();
 		}
 	}
+	
 	void send(string msg, int flags=0) {
 		zmq_msg_t zmsg;
 		zmq_msg_init_size(&zmsg, msg.length);
@@ -86,6 +87,16 @@ class Socket {
 		if(err != 0) {
 			throw new ZMQError();
 		}
+	}
+	void send_multipart(string msg[], int flags=0) {
+		for(size_t i=0; i+1 < msg.length; i++) {
+			this.send(msg[i], flags|Flags.SNDMORE);
+		}
+		this.send(msg[$-1], flags);
+	}
+	void send_topic(string topic, string msg, int flags=0) {
+		this.send(topic, flags|Flags.SNDMORE);
+		this.send(msg, flags);
 	}
 	string recv(int flags=0) {
 		zmq_msg_t zmsg;
@@ -98,6 +109,13 @@ class Socket {
 		} else {
 			return ret;
 		}
+	}
+	string[] recv_multipart(int flags=0) {
+		string[] parts = [];
+		do {
+			parts ~= this.recv(flags);
+		} while(this.more);
+		return parts;
 	}
 	
 	@property {
@@ -299,7 +317,7 @@ class Socket {
 		}
 		int backlog() {
 			int ret;
-			size_t size;
+			size_t size = ret.sizeof;
 			if(zmq_getsockopt(this.socket, ZMQ_BACKLOG, &ret, &size)) {
 				throw new ZMQError();
 			} else {
@@ -325,6 +343,16 @@ class Socket {
 		}
 		
 		// TODO: ZMQ_FD, ZMQ_events
+		
+		bool more() {
+			long ret;
+			size_t size = ret.sizeof;
+			if(zmq_getsockopt(this.socket, ZMQ_RCVMORE, &ret, &size)) {
+				throw new ZMQError();
+			} else {
+				return ret != 0;
+			}
+		}
 		
 	}
 	

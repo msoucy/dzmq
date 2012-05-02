@@ -1,5 +1,9 @@
 
+import core.thread;
+import core.time;
+
 import std.stdio;
+import std.string;
 
 import zmq;
 import dzmq;
@@ -9,15 +13,19 @@ void cmain() {
 	
 	// Socket to talk to server
 	writef("Connecting to hello world server…\n");
-	Socket requester = new Socket(context, Socket.Type.REQ);
+	Socket requester = new Socket(context, Socket.Type.SUB);
 	requester.connect("tcp://localhost:5555");
+	requester.subscribe("ZMQTesting");
+	try {
+		requester.more();
+	} catch(ZMQError e) {
+		writef("Yep, more's the problem.\n");
+		return;
+	}
 	
 	int request_nbr;
 	for (request_nbr = 0; request_nbr != 10; request_nbr++) {
-		writef ("Sending Hello %d…\n", request_nbr);
-		requester.send("Hello");
-		
-		string s = requester.recv();
+		string[] s = requester.recv_multipart();
 		writef("Received %s %d\n", s, request_nbr);
 	}
 }
@@ -27,20 +35,16 @@ void smain()
 	Context context = new Context(1);
 	
 	// Socket to talk to clients
-	Socket responder = new Socket(context, Socket.Type.REP);
+	Socket responder = new Socket(context, Socket.Type.PUB);
 	responder.bind("tcp://*:5555");
 	
+	int i=0;
 	while (1) {
 		// Wait for next request from client
-		string s = responder.recv();
-		writef("Received %s\n",s);
+		responder.send_topic("ZMQTesting", format("%d",i++));
 		
 		// Do some 'work'
-		//sleep (1);
-		foreach(i;0..100000){}
-		
-		// Send reply back to client
-		responder.send("World");
+		Thread.sleep(dur!"seconds"(1));
 	}
 }
 
