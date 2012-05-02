@@ -80,9 +80,9 @@ class Socket {
 	void send(string msg, int flags=0) {
 		zmq_msg_t zmsg;
 		zmq_msg_init_size(&zmsg, msg.length);
+		scope(exit) zmq_msg_close (&zmsg);
 		msg_pack(zmq_msg_data (&zmsg), msg);
 		auto err = zmq_send(this.socket, &zmsg, flags);
-		zmq_msg_close (&zmsg);
 		if(err != 0) {
 			throw new ZMQError();
 		}
@@ -90,9 +90,9 @@ class Socket {
 	string recv(int flags=0) {
 		zmq_msg_t zmsg;
 		zmq_msg_init(&zmsg);
+		scope(exit) zmq_msg_close(&zmsg);
 		auto err = zmq_recv(this.socket, &zmsg, flags);
 		string ret = msg_unpack(zmsg);
-		zmq_msg_close(&zmsg);
 		if(err != 0) {
 			throw new ZMQError();
 		} else {
