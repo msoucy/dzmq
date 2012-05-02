@@ -117,6 +117,12 @@ class Socket {
 		} while(this.more);
 		return parts;
 	}
+	string[] recv_topic(out string topic, int flags=0) {
+		string tmptopic = this.recv(flags);
+		scope(success) topic = tmptopic;
+		if(this.more) return this.recv_multipart(flags);
+		else return [];
+	}
 	
 	@property {
 		// High water mark

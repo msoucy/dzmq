@@ -16,17 +16,12 @@ void cmain() {
 	Socket requester = new Socket(context, Socket.Type.SUB);
 	requester.connect("tcp://localhost:5555");
 	requester.subscribe("ZMQTesting");
-	try {
-		requester.more();
-	} catch(ZMQError e) {
-		writef("Yep, more's the problem.\n");
-		return;
-	}
 	
 	int request_nbr;
+	string topic;
 	for (request_nbr = 0; request_nbr != 10; request_nbr++) {
-		string[] s = requester.recv_multipart();
-		writef("Received %s %d\n", s, request_nbr);
+		string[] s = requester.recv_topic(topic);
+		writef("Received %s: %s (%d)\n", topic, s, request_nbr);
 	}
 }
 
