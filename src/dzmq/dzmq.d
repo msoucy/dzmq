@@ -47,6 +47,7 @@ class Socket {
 	
 	private {
 		void* socket;
+		Type _type;
 		void msg_pack(void* destination, string data) {
 			size_t i=0;
 			while(i < data.length){
@@ -62,6 +63,7 @@ class Socket {
 	
 	this(Context context, Type type) {
 		socket = zmq_socket(context.raw, cast(int)type);
+		this._type = type;
 	}
 	~this() {
 		zmq_close(this.socket);
@@ -360,6 +362,10 @@ class Socket {
 			}
 		}
 		
+		Type type() {
+			return this._type;
+		}
+		
 	}
 	
 	// Subscribe and unsubscribe
@@ -372,6 +378,11 @@ class Socket {
 		if(zmq_setsockopt(this.socket, ZMQ_SUBSCRIBE, cast(void*)value.toStringz, value.length)) {
 			throw new ZMQError();
 		}
+	}
+	
+	// Raw access
+	@property ref void* raw() {
+		return this.socket;
 	}
 	
 }

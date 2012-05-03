@@ -5,8 +5,8 @@ import core.time;
 import std.stdio;
 import std.string;
 
-import zmq;
 import dzmq;
+import devices;
 
 void cmain() {
 	Context context = new Context(1);
@@ -14,7 +14,7 @@ void cmain() {
 	// Socket to talk to server
 	writef("Connecting to hello world server…\n");
 	Socket requester = new Socket(context, Socket.Type.SUB);
-	requester.connect("tcp://localhost:5555");
+	requester.connect("tcp://localhost:5667");
 	requester.subscribe("ZMQTesting");
 	
 	int request_nbr;
@@ -31,7 +31,7 @@ void smain()
 	
 	// Socket to talk to clients
 	Socket responder = new Socket(context, Socket.Type.PUB);
-	responder.bind("tcp://*:5555");
+	responder.bind("tcp://*:5668");
 	
 	int i=0;
 	while (1) {
@@ -43,11 +43,27 @@ void smain()
 	}
 }
 
+void dmain()
+{
+	Context context = new Context(1);
+	
+	// Socket to talk to clients
+	Socket front = new Socket(context, Socket.Type.SUB);
+	front.connect("tcp://localhost:5668");
+	front.subscribe("");
+	
+	Socket back = new Socket(context, Socket.Type.PUB);
+	back.bind("tcp://*:5667");
+	
+	auto dev = new ForwarderDevice(front, back);
+}
+
 void main(string[] argv) {
 	if(argv.length != 2) {
 		stderr.writeln("Error: Invalid arguments");
 		return;
 	}
 	if(argv[1] == "server") smain();
-	else cmain();
+	else if(argv[1] == "client") cmain();
+	else if(argv[1] == "device") dmain();
 }
