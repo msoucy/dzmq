@@ -1,4 +1,4 @@
-module devices;
+module dzmq.devices;
 
 // Get the base objects
 import zmq;
