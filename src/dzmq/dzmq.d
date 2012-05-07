@@ -22,6 +22,7 @@ class Context {
 	}
 	~this() {
 		zmq_term(this.context);
+		context = null;
 	}
 	@property void* raw() {return context;}
 }
@@ -96,10 +97,7 @@ class Socket {
 		}
 		this.send(msg[$-1], flags);
 	}
-	void send_topic(string topic, string msg, int flags=0) {
-		this.send(topic, flags|Flags.SNDMORE);
-		this.send(msg, flags);
-	}
+	
 	string recv(int flags=0) {
 		zmq_msg_t zmsg;
 		zmq_msg_init(&zmsg);
@@ -118,12 +116,6 @@ class Socket {
 			parts ~= this.recv(flags);
 		} while(this.more);
 		return parts;
-	}
-	string[] recv_topic(out string topic, int flags=0) {
-		string tmptopic = this.recv(flags);
-		scope(success) topic = tmptopic;
-		if(this.more) return this.recv_multipart(flags);
-		else return [];
 	}
 	
 	@property {
