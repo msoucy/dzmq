@@ -5,8 +5,7 @@ import core.time;
 import std.stdio;
 import std.string;
 
-import dzmq;
-import devices;
+import dzmq, devices;
 
 void cmain() {
 	Context context = new Context(1);
@@ -20,7 +19,8 @@ void cmain() {
 	int request_nbr;
 	string topic;
 	for (request_nbr = 0; request_nbr != 10; request_nbr++) {
-		string[] s = requester.recv_topic(topic);
+		string[] s = requester.recv_multipart();
+		//if(s[0] != `ABC123`)
 		writef("Received %s: %s (%d)\n", topic, s, request_nbr);
 	}
 }
@@ -31,12 +31,12 @@ void smain()
 	
 	// Socket to talk to clients
 	Socket responder = new Socket(context, Socket.Type.PUB);
-	responder.bind("tcp://*:5668");
+	responder.bind("tcp://*:5667");
 	
 	int i=0;
 	while (1) {
 		// Wait for next request from client
-		responder.send_topic("ZMQTesting", format("%d",i++));
+		responder.send_multipart(["ZMQTesting", "%d".format(i++)]);
 		
 		// Do some 'work'
 		Thread.sleep(dur!"seconds"(1));
