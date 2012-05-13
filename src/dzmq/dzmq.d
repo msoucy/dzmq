@@ -7,7 +7,7 @@
 ///D ZeroMQ class wrappers
 module dzmq;
 
-private import zmq;
+private import ZeroMQ.zmq;
 
 import std.string;
 import std.conv;

@@ -7,7 +7,7 @@
 module devices;
 
 // Get the base objects
-import zmq;
+private import ZeroMQ.zmq;
 import dzmq;
 
 import std.stdio : writef;
