@@ -2,19 +2,22 @@
 @brief D ZeroMQ device classes
 @authors Matthew Soucy <msoucy@csh.rit.edu>
 @date May 9, 2012
+@todo Look into using templates with Device.Type instead of separate classes
 */
 ///D ZeroMQ device classes
 module devices;
 
+/// @cond NoDoc
 // Get the base objects
 private import ZeroMQ.zmq;
 import dzmq;
 
 import std.stdio : writef;
+/// @endcond
 
 /**
-A device connects two related sockets, and is typically used for transferring data along a chain.
 @brief Interface for all devices
+A device connects two related sockets, and is typically used for transferring data along a chain.
 */
 interface Device {
 	/// Type of device
@@ -28,8 +31,9 @@ interface Device {
 	    /// User-defined connection, not built in to 0MQ
 	    CUSTOM,
 	}
-	/// Run a ZMQ Device
 	/**
+	@brief Run a ZMQ Device
+	
 	This action will block until the device's context is destroyed or the function terminates.
 	*/
 	void run();
@@ -46,15 +50,22 @@ abstract class DZMQDevice : Device {
 	@param back Backend socket
 	@param type Type of the device
 	*/
-	this(Socket front, Socket back, Type type) {
+	this(Socket front, Socket back, Type type=Type.CUSTOM) {
 		this.front = front;
 		this.back = back;
 		this.type = type;
 	}
 	void run() {
 		if(this.type != Type.CUSTOM) {
-			if(zmq_device(type, this.front.raw, this.back.raw) != 0) {
-				throw new ZMQError();
+			static if(ZMQ_VERSION_MAJOR == 2) {
+				// 0MQ version 2 supports devices, but they're gone in 3
+				if(zmq_device(type, this.front.raw, this.back.raw) != 0) {
+					throw new ZMQError();
+				}
+			} else static if(ZMQ_VERSION_MAJOR == 3) {
+				// We'll have to support this at some point...
+			} else {
+				static assert(0,"Unknown 0MQ version");
 			}
 		}
 	}
