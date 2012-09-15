@@ -10,12 +10,11 @@ module dzmq;
 /// @cond NoDoc
 private import ZeroMQ.zmq;
 
-import std.string;
-import std.conv;
+import std.string : toStringz, format;
+import std.algorithm : canFind;
 /// @endcond
 
-/**
-@brief ZeroMQ context manager
+/** @brief ZeroMQ context manager
 Manages the context for all sockets within a thread
 */
 class Context {
@@ -41,8 +40,7 @@ class Context {
 	@property void* raw() {return context;}
 }
 
-/// ZeroMQ socket class
-/**
+/** @brief ZeroMQ socket class
 Wraps a ZeroMQ socket and handles connections and data transfer
 
 @todo Add support for ZMQ_FD, to get the file descriptor (if valid in D)
@@ -111,8 +109,28 @@ class Socket {
 		*/
 		string msg_unpack(zmq_msg_t msg) {
 			size_t i=zmq_msg_size(&msg);
-			string ret=to!string(zmq_msg_data(&msg)[0..i]);
+			string ret=cast(string)(zmq_msg_data(&msg)[0..i]).idup;
 			return ret;
+		}
+		
+		mixin template SocketOption(string NAME, int VALUE, TYPE) {
+			/// Setter
+			@property void SocketOption(TYPE value) {
+				if(zmq_setsockopt(this.socket, VALUE, &value, TYPE.sizeof)) {
+					throw new ZMQError();
+				}
+			}
+			/// Getter
+			@property TYPE SocketOption() {
+				TYPE ret;
+				size_t size = TYPE.sizeof;
+				if(zmq_getsockopt(this.socket, VALUE, &ret, &size)) {
+					throw new ZMQError();
+				} else {
+					return ret;
+				}
+			}
+			mixin("alias SocketOption "~NAME~";");
 		}
 	}
 	
@@ -210,106 +228,33 @@ class Socket {
 		return parts;
 	}
 	
-	/*
-		Socket properties
-	*/
-	
-	
 	/** @name High water mark
 	
 	The number of messages that can build up in the socket's queue
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc3
-	@{
 	*/
-	/// Setter
-	@property void hwm(ulong value) {
-		if(zmq_setsockopt(this.socket, ZMQ_HWM, &value, ulong.sizeof)) {
-			throw new ZMQError();
-		}
-	}
-	/// Getter
-	@property ulong hwm() {
-		ulong ret;
-		size_t size;
-		if(zmq_getsockopt(this.socket, ZMQ_HWM, &ret, &size)) {
-			throw new ZMQError();
-		} else {
-			return ret;
-		}
-	}
-	/// @}
+	mixin SocketOption!("hwm",ZMQ_HWM,ulong);
 	
 	/** @name Disk offload swap size
 	
 	The size (in bytes) of disk memory to store outstanding messages
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc4
-	@{
 	*/
-	/// Setter
-	@property void swap(long value) {
-		if(zmq_setsockopt(this.socket, ZMQ_SWAP, &value, long.sizeof)) {
-			throw new ZMQError();
-		}
-	}
-	/// Getter
-	@property long swap() {
-		long ret;
-		size_t size;
-		if(zmq_getsockopt(this.socket, ZMQ_SWAP, &ret, &size)) {
-			throw new ZMQError();
-		} else {
-			return ret;
-		}
-	}
-	/// @}
+	mixin SocketOption!("swap",ZMQ_SWAP,long);
 	
 	/** @name I/O thread affinity
 	
 	Determines which threads to use for socket I/O
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc5
-	@{
 	*/
-	/// Setter
-	@property void affinity(ulong value) {
-		if(zmq_setsockopt(this.socket, ZMQ_AFFINITY, &value, ulong.sizeof)) {
-			throw new ZMQError();
-		}
-	}
-	/// Getter
-	@property ulong affinity() {
-		ulong ret;
-		size_t size;
-		if(zmq_getsockopt(this.socket, ZMQ_AFFINITY, &ret, &size)) {
-			throw new ZMQError();
-		} else {
-			return ret;
-		}
-	}
-	/// @}
+	mixin SocketOption!("affinity",ZMQ_AFFINITY,ulong);
 	
 	/** @name Multicast data rate
 	
 	The maximum send or receive data rate for multicast transports
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc9
-	@{
 	*/
-	/// Setter
-	void rate(long value) {
-		if(zmq_setsockopt(this.socket, ZMQ_RATE, &value, long.sizeof)) {
-			throw new ZMQError();
-		}
-	}
-	/// Getter
-	long rate() {
-		long ret;
-		size_t size;
-		if(zmq_getsockopt(this.socket, ZMQ_RATE, &ret, &size)) {
-			throw new ZMQError();
-		} else {
-			return ret;
-		}
-	}
-	/// @}
+	mixin SocketOption!("rate",ZMQ_RATE,long);
 	
 	/** @name Multicast recovery interval
 	
@@ -318,211 +263,60 @@ class Socket {
 	
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc10
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc11
-	@{
 	*/
-	/// Setter
-	@property void rec_ivl(long value) {
-		if(zmq_setsockopt(this.socket, ZMQ_RECOVERY_IVL, &value, long.sizeof)) {
-			throw new ZMQError();
-		}
-	}
-	/// Getter
-	@property long rec_ivl() {
-		long ret;
-		size_t size;
-		if(zmq_getsockopt(this.socket, ZMQ_RECOVERY_IVL, &ret, &size)) {
-			throw new ZMQError();
-		} else {
-			return ret;
-		}
-	}
-	/// Setter
-	@property void rec_ivl_msec(long value) {
-		if(zmq_setsockopt(this.socket, ZMQ_RECOVERY_IVL_MSEC, &value, long.sizeof)) {
-			throw new ZMQError();
-		}
-	}
-	/// Getter
-	@property long rec_ivl_msec() {
-		long ret;
-		size_t size;
-		if(zmq_getsockopt(this.socket, ZMQ_RECOVERY_IVL_MSEC, &ret, &size)) {
-			throw new ZMQError();
-		} else {
-			return ret;
-		}
-	}
-	// @}
+	mixin SocketOption!("rec_ivl",ZMQ_RECOVERY_IVL,long);
+	mixin SocketOption!("rec_ivl_msec",ZMQ_RECOVERY_IVL_MSEC,long);
 	
 	/** @name Multicast loopback
 	
 	Enables or disables the ability to receive transports from itself via loopback
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc12
-	@{
 	*/
-	/// Setter
-	@property void mcast(long value) {
-		if(zmq_setsockopt(this.socket, ZMQ_MCAST_LOOP, &value, long.sizeof)) {
-			throw new ZMQError();
-		}
-	}
-	/// Getter
-	@property long mcast() {
-		long ret;
-		size_t size;
-		if(zmq_getsockopt(this.socket, ZMQ_MCAST_LOOP, &ret, &size)) {
-			throw new ZMQError();
-		} else {
-			return ret;
-		}
-	}
-	// @}
+	mixin SocketOption!("mcast",ZMQ_MCAST_LOOP,long);
 	
 	/** @name Send buffer
 	
 	The underlying kernel transmit buffer size for the socket in bytes
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc13
-	@{
 	*/
-	/// Setter
-	@property void sndbuf(ulong value) {
-		if(zmq_setsockopt(this.socket, ZMQ_SNDBUF, &value, ulong.sizeof)) {
-			throw new ZMQError();
-		}
-	}
-	/// Getter
-	@property ulong sndbuf() {
-		ulong ret;
-		size_t size;
-		if(zmq_getsockopt(this.socket, ZMQ_SNDBUF, &ret, &size)) {
-			throw new ZMQError();
-		} else {
-			return ret;
-		}
-	}
-	// @}
+	mixin SocketOption!("sndbuf",ZMQ_SNDBUF,ulong);
 	
 	/** @name Receive buffer
 	
 	The underlying kernel receive buffer size for the socket in bytes
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc14
-	@{
 	*/
-	/// Setter
-	@property void rdvbuf(ulong value) {
-		if(zmq_setsockopt(this.socket, ZMQ_RCVBUF, &value, ulong.sizeof)) {
-			throw new ZMQError();
-		}
-	}
-	/// Getter
-	@property ulong rcvbuf() {
-		ulong ret;
-		size_t size;
-		if(zmq_getsockopt(this.socket, ZMQ_RCVBUF, &ret, &size)) {
-			throw new ZMQError();
-		} else {
-			return ret;
-		}
-	}
-	// @}
+	mixin SocketOption!("rcvbuf",ZMQ_RCVBUF,ulong);
 	
 	/** @name Linger period
 	
 	The amount of time a socket shall retain unsent messages after the socket closes, in milliseconds
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc15
-	@{
 	*/
-	/// Setter
-	@property void linger(int value) {
-		if(zmq_setsockopt(this.socket, ZMQ_LINGER, &value, int.sizeof)) {
-			throw new ZMQError();
-		}
-	}
-	/// Getter
-	@property int linger() {
-		int ret;
-		size_t size;
-		if(zmq_getsockopt(this.socket, ZMQ_LINGER, &ret, &size)) {
-			throw new ZMQError();
-		} else {
-			return ret;
-		}
-	}
-	// @}
+	mixin SocketOption!("linger",ZMQ_LINGER,int);
 	
 	/** @name Reconnection interval
 	
 	The period, in milliseconds, to wait between attempts to reconnect
 	disconnected peers when using connection-oriented transports
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc16
-	@{
 	*/
-	/// Setter
-	@property void reconnect_ivl(int value) {
-		if(zmq_setsockopt(this.socket, ZMQ_RECONNECT_IVL, &value, int.sizeof)) {
-			throw new ZMQError();
-		}
-	}
-	/// Getter
-	@property int reconnect_ivl() {
-		int ret;
-		size_t size;
-		if(zmq_getsockopt(this.socket, ZMQ_RECONNECT_IVL, &ret, &size)) {
-			throw new ZMQError();
-		} else {
-			return ret;
-		}
-	}
-	// @}
+	mixin SocketOption!("reconnect_ivl",ZMQ_RECONNECT_IVL,int);
 	
 	/** @name Maximum reconnection interval
 	
 	The maximum period to wait between reconnection attempts
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc17
-	@{
 	*/
-	/// Setter
-	@property void reconnect_ivl_max(int value) {
-		if(zmq_setsockopt(this.socket, ZMQ_RECONNECT_IVL_MAX, &value, int.sizeof)) {
-			throw new ZMQError();
-		}
-	}
-	/// Getter
-	@property int reconnect_ivl_max() {
-		int ret;
-		size_t size;
-		if(zmq_getsockopt(this.socket, ZMQ_RECONNECT_IVL_MAX, &ret, &size)) {
-			throw new ZMQError();
-		} else {
-			return ret;
-		}
-	}
-	// @}
+	mixin SocketOption!("reconnect_ivl_max",ZMQ_RECONNECT_IVL_MAX,int);
 	
 	/** @name Backlog
 	
 	Maximum length of the queue of outstanding peer connections
 	for connection-oriented transports
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc18
-	@{
 	*/
-	/// Setter
-	@property void backlog(int value) {
-		if(zmq_setsockopt(this.socket, ZMQ_BACKLOG, &value, int.sizeof)) {
-			throw new ZMQError();
-		}
-	}
-	/// Getter
-	@property int backlog() {
-		int ret;
-		size_t size = ret.sizeof;
-		if(zmq_getsockopt(this.socket, ZMQ_BACKLOG, &ret, &size)) {
-			throw new ZMQError();
-		} else {
-			return ret;
-		}
-	}
-	// @}
+	mixin SocketOption!("backlog",ZMQ_BACKLOG,int);
 	
 	/** @name Identity
 	
@@ -541,11 +335,13 @@ class Socket {
 	/// Getter
 	@property string identity() {
 		string ret;
-		size_t size;
-		auto err = zmq_getsockopt(this.socket, ZMQ_IDENTITY, &ret, &size);
+		size_t size=256;
+		char[256] data;
+		auto err = zmq_getsockopt(this.socket, ZMQ_IDENTITY, data.ptr, &size);
 		if(err) {
 			throw new ZMQError();
 		} else {
+			ret = data[0..size].idup;
 			return ret;
 		}
 	}
@@ -616,7 +412,93 @@ class Socket {
 }
 
 /**
-@brief ZMQ error class
+@brief D Range adaptor for sockets
+*/
+class SocketStream {
+private:
+	Socket sock;
+	string[] data;
+	bool isWriteableSocket() {
+		return([Type.REQ, Type.REP,
+				Type.DEALER, Type.ROUTER,
+				Type.PUB, Type.PUSH,
+				Type.PAIR].canFind(sock.type));
+	}
+	bool isReadableSocket() {
+		return([Type.REQ, Type.REP,
+				Type.DEALER, Type.ROUTER,
+				Type.SUB, Type.PULL,
+				Type.PAIR].canFind(sock.type));
+	}
+	
+public:
+	/// Wrap all socket functions
+	alias sock this;
+	
+	/**
+	@brief Creates and initializes a socket
+	@param sock The socket to wrap in a stream
+	*/
+	this(Socket sock) {
+		this.sock = sock;
+	}
+	/**
+	@brief Creates and initializes a socket
+	@param context The 0MQ context to use for the socket's creation
+	@param type The type of the socket
+	*/
+	this(Context context, Socket.Type type) {
+		this(new Socket(context, type));
+	}
+	
+	// Input range interface
+	
+	/**
+	@brief Check to see if there is more data
+	@return True if the socket exists
+	*/
+	@property bool empty() {
+		return sock is null || sock.raw is null;
+	}
+	
+	/**
+	@brief Get the "current" data
+	@return An array of strings received via 0MQ (a full "message")
+	*/
+	@property string[] front()
+	{
+		assert(!this.empty, "Attempting to read from unopened socket");
+		assert(isReadableSocket(), "Socket is not readable");
+		if(data.length==0) this.popFront();
+		return this.data;
+	}
+
+	/**
+	@brief Get the next message from the socket
+	
+	Does not return anything, using the data requires using .front
+	*/
+	void popFront()
+	{
+		assert(!this.empty, "Attempting to read from unopened socket");
+		assert(isReadableSocket(), "Socket is not readable");
+		this.data = this.sock.recv_multipart();
+	}
+	
+	// Output range interface
+	
+	/**
+	@brief Output a message to a stream
+	@param strs A multipart message to send
+	*/
+	void put(string[] strs) {
+		assert(!this.empty, "Attempting to read from unopened socket");
+		assert(isWriteableSocket(), "Socket is not writeable");
+		this.sock.send_multipart(strs);
+	}
+}
+
+/** @brief ZMQ error class
 Automatically gets the latest ZMQ error
 */
 class ZMQError : Error {
@@ -626,11 +508,12 @@ public:
 	*/
     this () {
     	char* errmsg = zmq_strerror(zmq_errno ());
+    	// Convert C string to D string
     	string msg = "";
     	char* tmp = errmsg;
     	while(*tmp) {
     		msg ~= *(tmp++);
     	}
-    	super( format("%s", msg/+, file, line +/));
+    	super(format("%s", msg));
 	}
 };

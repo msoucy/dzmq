@@ -15,13 +15,10 @@ void cmain() {
 	Socket requester = new Socket(context, Socket.Type.SUB);
 	requester.connect("tcp://localhost:5667");
 	requester.subscribe("ZMQTesting");
+	auto rs = new SocketStream(requester);
 	
-	int request_nbr;
-	string topic;
-	for (request_nbr = 0; request_nbr != 10; request_nbr++) {
-		string[] s = requester.recv_multipart();
-		//if(s[0] != `ABC123`)
-		writef("Received %s: %s (%d)\n", topic, s, request_nbr);
+	foreach(s;rs) {
+		"Received: %s".writefln(s);
 	}
 }
 
