@@ -5,10 +5,10 @@
 @version 0.0.1
 */
 ///D ZeroMQ class wrappers
-module dzmq;
+module metus.dzmq.dzmq;
 
 /// @cond NoDoc
-private import ZeroMQ.zmq;
+private import zmq;
 
 import std.string : toStringz, format;
 import std.algorithm : canFind;

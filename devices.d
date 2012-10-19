@@ -5,12 +5,12 @@
 @todo Look into using templates with Device.Type instead of separate classes
 */
 ///D ZeroMQ device classes
-module devices;
+module metus.dzmq.devices;
 
 /// @cond NoDoc
 // Get the base objects
-private import ZeroMQ.zmq;
-import dzmq;
+private import zmq;
+import metus.dzmq.dzmq;
 
 import std.stdio : writef;
 /// @endcond
