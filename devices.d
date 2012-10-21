@@ -16,8 +16,8 @@ import std.stdio : writef;
 /// @endcond
 
 /**
-@brief Interface for all devices
-A device connects two related sockets, and is typically used for transferring data along a chain.
+ * @brief Interface for all devices
+ * A device connects two related sockets, and is typically used for transferring data along a chain.
 */
 interface Device {
 	/// Type of device
@@ -32,9 +32,9 @@ interface Device {
 	    CUSTOM,
 	}
 	/**
-	@brief Run a ZMQ Device
-	
-	This action will block until the device's context is destroyed or the function terminates.
+	 * @brief Run a ZMQ Device
+	 * 
+	 * This action will block until the device's context is destroyed or the function terminates.
 	*/
 	void run();
 }
@@ -46,9 +46,9 @@ abstract class DZMQDevice : Device {
 		Type type;
 	}
 	/**
-	@param front Frontend socket
-	@param back Backend socket
-	@param type Type of the device
+	 * @param front Frontend socket
+	 * @param back Backend socket
+	 * @param type Type of the device
 	*/
 	this(Socket front, Socket back, Type type=Type.CUSTOM) {
 		this.front = front;
@@ -74,9 +74,9 @@ abstract class DZMQDevice : Device {
 /// Wrapper for a Streamer device
 class StreamerDevice : DZMQDevice {
 	/**
-	Create a Streamer device to pull data from one socket and push it out another
-	@param front A PULL-type socket
-	@param back A PUSH-type socket
+	 * Create a Streamer device to pull data from one socket and push it out another
+	 * @param front A PULL-type socket
+	 * @param back A PUSH-type socket
 	*/
 	this(Socket front, Socket back)
 	in {
@@ -90,9 +90,9 @@ class StreamerDevice : DZMQDevice {
 /// Wrapper for a Forwarder device
 class ForwarderDevice : DZMQDevice {
 	/**
-	Create a Forwarder device to subscribe to certain topics and publish them on another socket
-	@param front A SUB-type socket
-	@param back A PUB-type socket
+	 * Create a Forwarder device to subscribe to certain topics and publish them on another socket
+	 * @param front A SUB-type socket
+	 * @param back A PUB-type socket
 	*/
 	this(Socket front, Socket back)
 	in {
@@ -106,11 +106,11 @@ class ForwarderDevice : DZMQDevice {
 /// Wrapper for a Queue device
 class QueueDevice : DZMQDevice {
 	/**
-	Create a Queue device.
-	
-	This interfaces with REQ-REP sockets
-	@param front A SUB-type socket
-	@param back A PUB-type socket
+	 * Create a Queue device.
+	 * 
+	 * This interfaces with REQ-REP sockets
+	 * @param front A SUB-type socket
+	 * @param back A PUB-type socket
 	*/
 	this(Socket front, Socket back)
 	in {

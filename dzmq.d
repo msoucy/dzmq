@@ -22,9 +22,9 @@ class Context {
 		void* context;
 	}
 	/**
-	Constructor
-	Create a 0MQ context to manage all sockets within a thread
-	@param io_threads Number of threads to use for the context
+	 * Constructor
+	 * Create a 0MQ context to manage all sockets within a thread
+	 * @param io_threads Number of threads to use for the context
 	*/
 	this(int io_threads=0) {
 		this.context = zmq_init(io_threads);
@@ -34,8 +34,8 @@ class Context {
 		context = null;
 	}
 	/**
-	Get a raw pointer to the context
-	@return Pointer to the block of data representing the context
+	 * Get a raw pointer to the context
+	 * @return Pointer to the block of data representing the context
 	*/
 	@property void* raw() {return context;}
 }
@@ -49,9 +49,9 @@ Wraps a ZeroMQ socket and handles connections and data transfer
 class Socket {
 	/// Socket types
 	/**
-	Types for a socket
-	
-	Defined to be the same as in ZMQ
+	 * Types for a socket
+	 * 
+	 * Defined to be the same as in ZMQ
 	*/
 	public immutable enum Type {
 		/// Pair
@@ -78,7 +78,7 @@ class Socket {
 	    XSUB        = ZMQ_XSUB,
 	}
 	/**
-	Message sending flags
+	 * Message sending flags
 	*/
 	public immutable enum Flags {
 		/// Send/receive nonblocking
@@ -92,9 +92,9 @@ class Socket {
 		Type _type;
 		
 		/**
-		Packs a string into a block of data
-		@param destination Pointer to a valid block of data to write to
-		@param data The string data to write
+		 * Packs a string into a block of data
+		 * @param destination Pointer to a valid block of data to write to
+		 * @param data The string data to write
 		*/
 		void msg_pack(void* destination, string data) {
 			size_t i=0;
@@ -103,9 +103,9 @@ class Socket {
 			}
 		}
 		/**
-		Unpacks a string from a zmq_msg_t
-		@param msg The message to unpack
-		@returns The stored string
+		 * Unpacks a string from a zmq_msg_t
+		 * @param msg The message to unpack
+		 * @returns The stored string
 		*/
 		string msg_unpack(zmq_msg_t msg) {
 			size_t i=zmq_msg_size(&msg);
@@ -135,24 +135,24 @@ class Socket {
 	}
 	
 	/**
-	@brief Creates and initializes a socket
-	@param context The 0MQ context to use for the socket's creation
-	@param type The type of the socket
+	 * @brief Creates and initializes a socket
+	 * @param context The 0MQ context to use for the socket's creation
+	 * @param type The type of the socket
 	*/
 	this(Context context, Type type) {
 		socket = zmq_socket(context.raw, cast(int)type);
 		this._type = type;
 	}
 	/**
-	@brief Cleans up after a socket
+	 * @brief Cleans up after a socket
 	*/
 	~this() {
 		zmq_close(this.socket);
  	}
 	
 	/**
-	@brief Bind a socket to an address
-	@param addr The address to bind to
+	 * @brief Bind a socket to an address
+	 * @param addr The address to bind to
 	*/
 	void bind(string addr) {
 		if(zmq_bind (this.socket, addr.toStringz()) != 0) {
@@ -160,8 +160,8 @@ class Socket {
 		}
 	}
 	/**
-	@brief Connect a socket to an address
-	@param endpoint The address to connect to
+	 * @brief Connect a socket to an address
+	 * @param endpoint The address to connect to
 	*/
 	void connect(string endpoint) {
 		if(zmq_connect(this.socket, endpoint.toStringz()) != 0) {
@@ -170,9 +170,9 @@ class Socket {
 	}
 	
 	/**
-	@brief Send a message
-	@param msg Data to send
-	@param flags Send flags
+	 * @brief Send a message
+	 * @param msg Data to send
+	 * @param flags Send flags
 	*/
 	void send(string msg, int flags=0) {
 		zmq_msg_t zmsg;
@@ -185,10 +185,10 @@ class Socket {
 		}
 	}
 	/**
-	@brief Send a multipart message
-	Each string is sent as a separate part of the message
-	@param msg Data to send
-	@param flags Send flags
+	 * @brief Send a multipart message
+	 * Each string is sent as a separate part of the message
+	 * @param msg Data to send
+	 * @param flags Send flags
 	*/
 	void send_multipart(string msg[], int flags=0) {
 		for(size_t i=0; i+1 < msg.length; i++) {
@@ -198,9 +198,9 @@ class Socket {
 	}
 	
 	/**
-	@brief Receive a message
-	@param flags Receive flags
-	@returns A string storing the data received
+	 * @brief Receive a message
+	 * @param flags Receive flags
+	 * @returns A string storing the data received
 	*/
 	string recv(int flags=0) {
 		zmq_msg_t zmsg;
@@ -215,10 +215,10 @@ class Socket {
 		}
 	}
 	/**
-	@brief Receive a message
-	Each string is received as a separate part of the message
-	@param flags Receive flags
-	@returns All data strings in the message
+	 * @brief Receive a message
+	 * Each string is received as a separate part of the message
+	 * @param flags Receive flags
+	 * @returns All data strings in the message
 	*/
 	string[] recv_multipart(int flags=0) {
 		string[] parts = [];
@@ -349,8 +349,8 @@ class Socket {
 	
 	
 	/**
-	@brief Checks for more parts of a message
-	@returns True if there is another message part queued
+	 * @brief Checks for more parts of a message
+	 * @returns True if there is another message part queued
 	*/
 	@property bool more() {
 		long ret;
@@ -363,25 +363,25 @@ class Socket {
 	}
 	
 	/**
-	@brief The type of the socket 
-	@returns The socket's type
+	 * @brief The type of the socket 
+	 * @returns The socket's type
 	*/
 	@property Type type() {
 		return this._type;
 	}
 	
 	/**
-	@brief Subscribe to a topic
-	
-	On a SUB socket, this creates a filter identifying messages to receive.
-	
-	If the \c topic is "", then the socket will subscribe to all messages.
-	
-	If the \c topic has a nonzero length, then the socket will subscribe to all
-	messages beginning with the topic.
-	
-	@param topic The topic to subscribe to
-	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc7
+	 * @brief Subscribe to a topic
+	 * 
+	 * On a SUB socket, this creates a filter identifying messages to receive.
+	 * 
+	 * If the \c topic is "", then the socket will subscribe to all messages.
+	 * 
+	 * If the \c topic has a nonzero length, then the socket will subscribe to all
+	 * messages beginning with the topic.
+	 * 
+	 * @param topic The topic to subscribe to
+	 * @see http://api.zeromq.org/2-1:zmq-setsockopt#toc7
 	*/
 	void subscribe(string topic) {
 		if(zmq_setsockopt(this.socket, ZMQ_SUBSCRIBE, cast(void*)topic.toStringz(), topic.length)) {
@@ -389,11 +389,11 @@ class Socket {
 		}
 	}
 	/**
-	@brief Unsubscribe to a topic
-	
-	On a SUB socket, this removes a filter identifying messages to receive
-	@param topic The topic to unsubscribe from
-	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc8
+	 * @brief Unsubscribe to a topic
+	 * 
+	 * On a SUB socket, this removes a filter identifying messages to receive
+	 * @param topic The topic to unsubscribe from
+	 * @see http://api.zeromq.org/2-1:zmq-setsockopt#toc8
 	*/
 	void unsubscribe(string topic) {
 		if(zmq_setsockopt(this.socket, ZMQ_SUBSCRIBE, cast(void*)topic.toStringz(), topic.length)) {
@@ -402,8 +402,8 @@ class Socket {
 	}
 	
 	/**
-	@brief Raw socket access
-	@returns A pointer to the zmq socket data
+	 * @brief Raw socket access
+	 * @returns A pointer to the zmq socket data
 	*/
 	@property ref void* raw() {
 		return this.socket;
@@ -412,7 +412,7 @@ class Socket {
 }
 
 /**
-@brief D Range adaptor for sockets
+ * @brief D Range adaptor for sockets
 */
 class SocketStream {
 private:
@@ -436,16 +436,16 @@ public:
 	alias sock this;
 	
 	/**
-	@brief Creates and initializes a socket
-	@param sock The socket to wrap in a stream
+	 * @brief Creates and initializes a socket
+	 * @param sock The socket to wrap in a stream
 	*/
 	this(Socket sock) {
 		this.sock = sock;
 	}
 	/**
-	@brief Creates and initializes a socket
-	@param context The 0MQ context to use for the socket's creation
-	@param type The type of the socket
+	 * @brief Creates and initializes a socket
+	 * @param context The 0MQ context to use for the socket's creation
+	 * @param type The type of the socket
 	*/
 	this(Context context, Socket.Type type) {
 		this(new Socket(context, type));
@@ -454,16 +454,16 @@ public:
 	// Input range interface
 	
 	/**
-	@brief Check to see if there is more data
-	@return True if the socket exists
+	 * @brief Check to see if there is more data
+	 * @return True if the socket exists
 	*/
 	@property bool empty() {
 		return sock is null || sock.raw is null;
 	}
 	
 	/**
-	@brief Get the "current" data
-	@return An array of strings received via 0MQ (a full "message")
+	 * @brief Get the "current" data
+	 * @return An array of strings received via 0MQ (a full "message")
 	*/
 	@property string[] front()
 	{
@@ -474,9 +474,9 @@ public:
 	}
 
 	/**
-	@brief Get the next message from the socket
-	
-	Does not return anything, using the data requires using .front
+	 * @brief Get the next message from the socket
+	 * 
+	 * Does not return anything, using the data requires using .front
 	*/
 	void popFront()
 	{
@@ -488,8 +488,8 @@ public:
 	// Output range interface
 	
 	/**
-	@brief Output a message to a stream
-	@param strs A multipart message to send
+	 * @brief Output a message to a stream
+	 * @param strs A multipart message to send
 	*/
 	void put(string[] strs) {
 		assert(!this.empty, "Attempting to read from unopened socket");
@@ -504,7 +504,7 @@ Automatically gets the latest ZMQ error
 class ZMQError : Error {
 public:
 	/**
-	Create and automatically initialize a ZMQError
+	 * Create and automatically initialize a ZMQError
 	*/
     this () {
     	char* errmsg = zmq_strerror(zmq_errno ());
