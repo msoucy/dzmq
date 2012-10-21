@@ -113,7 +113,7 @@ class Socket {
 			return ret;
 		}
 		
-		mixin template SocketOption(string NAME, int VALUE, TYPE) {
+		mixin template SocketOption(TYPE, string NAME, int VALUE) {
 			/// Setter
 			@property void SocketOption(TYPE value) {
 				if(zmq_setsockopt(this.socket, VALUE, &value, TYPE.sizeof)) {
@@ -233,28 +233,28 @@ class Socket {
 	The number of messages that can build up in the socket's queue
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc3
 	*/
-	mixin SocketOption!("hwm",ZMQ_HWM,ulong);
+	mixin SocketOption!(ulong, "hwm", ZMQ_HWM);
 	
 	/** @name Disk offload swap size
 	
 	The size (in bytes) of disk memory to store outstanding messages
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc4
 	*/
-	mixin SocketOption!("swap",ZMQ_SWAP,long);
+	mixin SocketOption!(long, "swap", ZMQ_SWAP);
 	
 	/** @name I/O thread affinity
 	
 	Determines which threads to use for socket I/O
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc5
 	*/
-	mixin SocketOption!("affinity",ZMQ_AFFINITY,ulong);
+	mixin SocketOption!(ulong, "affinity", ZMQ_AFFINITY);
 	
 	/** @name Multicast data rate
 	
 	The maximum send or receive data rate for multicast transports
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc9
 	*/
-	mixin SocketOption!("rate",ZMQ_RATE,long);
+	mixin SocketOption!(long, "rate", ZMQ_RATE);
 	
 	/** @name Multicast recovery interval
 	
@@ -264,36 +264,36 @@ class Socket {
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc10
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc11
 	*/
-	mixin SocketOption!("rec_ivl",ZMQ_RECOVERY_IVL,long);
-	mixin SocketOption!("rec_ivl_msec",ZMQ_RECOVERY_IVL_MSEC,long);
+	mixin SocketOption!(long, "rec_ivl", ZMQ_RECOVERY_IVL);
+	mixin SocketOption!(long, "rec_ivl_msec", ZMQ_RECOVERY_IVL_MSEC);
 	
 	/** @name Multicast loopback
 	
 	Enables or disables the ability to receive transports from itself via loopback
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc12
 	*/
-	mixin SocketOption!("mcast",ZMQ_MCAST_LOOP,long);
+	mixin SocketOption!(long, "mcast", ZMQ_MCAST_LOOP);
 	
 	/** @name Send buffer
 	
 	The underlying kernel transmit buffer size for the socket in bytes
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc13
 	*/
-	mixin SocketOption!("sndbuf",ZMQ_SNDBUF,ulong);
+	mixin SocketOption!(ulong, "sndbuf", ZMQ_SNDBUF);
 	
 	/** @name Receive buffer
 	
 	The underlying kernel receive buffer size for the socket in bytes
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc14
 	*/
-	mixin SocketOption!("rcvbuf",ZMQ_RCVBUF,ulong);
+	mixin SocketOption!(ulong, "rcvbuf", ZMQ_RCVBUF);
 	
 	/** @name Linger period
 	
 	The amount of time a socket shall retain unsent messages after the socket closes, in milliseconds
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc15
 	*/
-	mixin SocketOption!("linger",ZMQ_LINGER,int);
+	mixin SocketOption!(int, "linger", ZMQ_LINGER);
 	
 	/** @name Reconnection interval
 	
@@ -301,14 +301,14 @@ class Socket {
 	disconnected peers when using connection-oriented transports
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc16
 	*/
-	mixin SocketOption!("reconnect_ivl",ZMQ_RECONNECT_IVL,int);
+	mixin SocketOption!(int, "reconnect_ivl", ZMQ_RECONNECT_IVL);
 	
 	/** @name Maximum reconnection interval
 	
 	The maximum period to wait between reconnection attempts
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc17
 	*/
-	mixin SocketOption!("reconnect_ivl_max",ZMQ_RECONNECT_IVL_MAX,int);
+	mixin SocketOption!(int, "reconnect_ivl_max", ZMQ_RECONNECT_IVL_MAX);
 	
 	/** @name Backlog
 	
@@ -316,7 +316,7 @@ class Socket {
 	for connection-oriented transports
 	@see http://api.zeromq.org/2-1:zmq-setsockopt#toc18
 	*/
-	mixin SocketOption!("backlog",ZMQ_BACKLOG,int);
+	mixin SocketOption!(int, "backlog",ZMQ_BACKLOG);
 	
 	/** @name Identity
 	
