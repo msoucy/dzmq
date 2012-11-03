@@ -9,7 +9,7 @@ module metus.dzmq.devices;
 
 /// @cond NoDoc
 // Get the base objects
-private import zmq;
+private import deimos.zmq.zmq;
 import metus.dzmq.dzmq;
 
 import std.stdio : writef;

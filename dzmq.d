@@ -8,7 +8,7 @@
 module metus.dzmq.dzmq;
 
 /// @cond NoDoc
-private import zmq;
+private import deimos.zmq.zmq;
 
 import std.string : toStringz, format;
 import std.algorithm : canFind;
