@@ -28,7 +28,7 @@ interface Device {
 	    FORWARDER    = ZMQ_FORWARDER,
 	    /// Handles Router/Dealer connections
 	    QUEUE        = ZMQ_QUEUE,
-	    /// User-defined connection, not built in to 0MQ
+	    /// User-defined connection, not built in to D0MQ
 	    CUSTOM,
 	}
 	/**
@@ -55,12 +55,12 @@ abstract class DZMQDevice : Device {
 		this.back = back;
 		this.type = type;
 	}
-	void run() {
+	final void run() {
 		if(this.type != Type.CUSTOM) {
 			static if(ZMQ_VERSION_MAJOR == 2) {
 				// 0MQ version 2 supports devices, but they're gone in 3
 				if(zmq_device(type, this.front.raw, this.back.raw) != 0) {
-					throw new ZMQError();
+					throw new ZMQException();
 				}
 			} else static if(ZMQ_VERSION_MAJOR == 3) {
 				// We'll have to support this at some point...
@@ -72,7 +72,7 @@ abstract class DZMQDevice : Device {
 }
 
 /// Wrapper for a Streamer device
-class StreamerDevice : DZMQDevice {
+final class StreamerDevice : DZMQDevice {
 	/**
 	 * Create a Streamer device to pull data from one socket and push it out another
 	 * @param front A PULL-type socket
@@ -88,7 +88,7 @@ class StreamerDevice : DZMQDevice {
 }
 
 /// Wrapper for a Forwarder device
-class ForwarderDevice : DZMQDevice {
+final class ForwarderDevice : DZMQDevice {
 	/**
 	 * Create a Forwarder device to subscribe to certain topics and publish them on another socket
 	 * @param front A SUB-type socket
@@ -104,7 +104,7 @@ class ForwarderDevice : DZMQDevice {
 }
 
 /// Wrapper for a Queue device
-class QueueDevice : DZMQDevice {
+final class QueueDevice : DZMQDevice {
 	/**
 	 * Create a Queue device.
 	 * 

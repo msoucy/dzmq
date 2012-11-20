@@ -117,7 +117,7 @@ class Socket {
 			/// Setter
 			@property void SocketOption(TYPE value) {
 				if(zmq_setsockopt(this.socket, VALUE, &value, TYPE.sizeof)) {
-					throw new ZMQError();
+					throw new ZMQException();
 				}
 			}
 			/// Getter
@@ -125,7 +125,7 @@ class Socket {
 				TYPE ret;
 				size_t size = TYPE.sizeof;
 				if(zmq_getsockopt(this.socket, VALUE, &ret, &size)) {
-					throw new ZMQError();
+					throw new ZMQException();
 				} else {
 					return ret;
 				}
@@ -156,7 +156,7 @@ class Socket {
 	*/
 	void bind(string addr) {
 		if(zmq_bind (this.socket, addr.toStringz()) != 0) {
-			throw new ZMQError();
+			throw new ZMQException();
 		}
 	}
 	/**
@@ -165,7 +165,7 @@ class Socket {
 	*/
 	void connect(string endpoint) {
 		if(zmq_connect(this.socket, endpoint.toStringz()) != 0) {
-			throw new ZMQError();
+			throw new ZMQException();
 		}
 	}
 	
@@ -181,7 +181,7 @@ class Socket {
 		msg_pack(zmq_msg_data (&zmsg), msg);
 		auto err = zmq_send(this.socket, &zmsg, flags);
 		if(err != 0) {
-			throw new ZMQError();
+			throw new ZMQException();
 		}
 	}
 	/**
@@ -209,7 +209,7 @@ class Socket {
 		auto err = zmq_recv(this.socket, &zmsg, flags);
 		string ret = msg_unpack(zmsg);
 		if(err != 0) {
-			throw new ZMQError();
+			throw new ZMQException();
 		} else {
 			return ret;
 		}
@@ -329,7 +329,7 @@ class Socket {
 	/// Setter
 	@property void identity(string value) {
 		if(zmq_setsockopt(this.socket, ZMQ_IDENTITY, cast(void*)value.toStringz(), value.length)) {
-			throw new ZMQError();
+			throw new ZMQException();
 		}
 	}
 	/// Getter
@@ -339,7 +339,7 @@ class Socket {
 		char[256] data;
 		auto err = zmq_getsockopt(this.socket, ZMQ_IDENTITY, data.ptr, &size);
 		if(err) {
-			throw new ZMQError();
+			throw new ZMQException();
 		} else {
 			ret = data[0..size].idup;
 			return ret;
@@ -356,7 +356,7 @@ class Socket {
 		long ret;
 		size_t size = ret.sizeof;
 		if(zmq_getsockopt(this.socket, ZMQ_RCVMORE, &ret, &size)) {
-			throw new ZMQError();
+			throw new ZMQException();
 		} else {
 			return ret != 0;
 		}
@@ -385,7 +385,7 @@ class Socket {
 	*/
 	void subscribe(string topic) {
 		if(zmq_setsockopt(this.socket, ZMQ_SUBSCRIBE, cast(void*)topic.toStringz(), topic.length)) {
-			throw new ZMQError();
+			throw new ZMQException();
 		}
 	}
 	/**
@@ -397,7 +397,7 @@ class Socket {
 	*/
 	void unsubscribe(string topic) {
 		if(zmq_setsockopt(this.socket, ZMQ_SUBSCRIBE, cast(void*)topic.toStringz(), topic.length)) {
-			throw new ZMQError();
+			throw new ZMQException();
 		}
 	}
 	
@@ -501,10 +501,10 @@ public:
 /** @brief ZMQ error class
 Automatically gets the latest ZMQ error
 */
-class ZMQError : Error {
+class ZMQException : Exception {
 public:
 	/**
-	 * Create and automatically initialize a ZMQError
+	 * Create and automatically initialize a ZMQException
 	*/
     this () {
     	char* errmsg = zmq_strerror(zmq_errno ());
