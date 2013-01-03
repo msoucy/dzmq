@@ -9,10 +9,7 @@ module metus.dzmq.devices;
 
 /// @cond NoDoc
 // Get the base objects
-private import deimos.zmq.zmq;
 import metus.dzmq.dzmq;
-
-import std.stdio : writef;
 /// @endcond
 
 /**
@@ -23,11 +20,11 @@ interface Device {
 	/// Type of device
 	immutable enum Type {
 		/// Handles Push/Pull connections
-	    STREAMER     = ZMQ_STREAMER,
+	    STREAMER     = zmq.ZMQ_STREAMER,
 	    /// Handles Pub/Sub connections
-	    FORWARDER    = ZMQ_FORWARDER,
+	    FORWARDER    = zmq.ZMQ_FORWARDER,
 	    /// Handles Router/Dealer connections
-	    QUEUE        = ZMQ_QUEUE,
+	    QUEUE        = zmq.ZMQ_QUEUE,
 	    /// User-defined connection, not built in to D0MQ
 	    CUSTOM,
 	}
@@ -40,7 +37,7 @@ interface Device {
 }
 
 /// Wrapper for all of the builtin device types
-abstract class DZMQDevice : Device {
+private abstract class DZMQDevice : Device {
 	private {
 		Socket front, back;
 		Type type;
@@ -50,22 +47,23 @@ abstract class DZMQDevice : Device {
 	 * @param back Backend socket
 	 * @param type Type of the device
 	*/
-	this(Socket front, Socket back, Type type=Type.CUSTOM) {
+	@safe nothrow this(Socket front, Socket back, Type type=Type.CUSTOM) {
 		this.front = front;
 		this.back = back;
 		this.type = type;
 	}
-	final void run() {
+	@trusted final void run() {
 		if(this.type != Type.CUSTOM) {
-			static if(ZMQ_VERSION_MAJOR == 2) {
+			static if(zmq.ZMQ_VERSION_MAJOR == 2) {
 				// 0MQ version 2 supports devices, but they're gone in 3
-				if(zmq_device(type, this.front.raw, this.back.raw) != 0) {
+				if(zmq.zmq_device(type, this.front.raw, this.back.raw) != 0) {
 					throw new ZMQException();
 				}
-			} else static if(ZMQ_VERSION_MAJOR == 3) {
+			} else static if(zmq.ZMQ_VERSION_MAJOR == 3) {
 				// We'll have to support this at some point...
+				static assert(0, "Unsupported 0MQ version");
 			} else {
-				static assert(0,"Unknown 0MQ version");
+				static assert(0, "Unknown 0MQ version");
 			}
 		}
 	}
@@ -78,7 +76,7 @@ final class StreamerDevice : DZMQDevice {
 	 * @param front A PULL-type socket
 	 * @param back A PUSH-type socket
 	*/
-	this(Socket front, Socket back)
+	@safe nothrow this(Socket front, Socket back)
 	in {
 		assert(front.type == Socket.Type.PULL);
 		assert(back.type == Socket.Type.PUSH);
@@ -94,7 +92,7 @@ final class ForwarderDevice : DZMQDevice {
 	 * @param front A SUB-type socket
 	 * @param back A PUB-type socket
 	*/
-	this(Socket front, Socket back)
+	@safe nothrow this(Socket front, Socket back)
 	in {
 		assert(front.type == Socket.Type.SUB);
 		assert(back.type == Socket.Type.PUB);
@@ -112,7 +110,7 @@ final class QueueDevice : DZMQDevice {
 	 * @param front A SUB-type socket
 	 * @param back A PUB-type socket
 	*/
-	this(Socket front, Socket back)
+	@safe nothrow this(Socket front, Socket back)
 	in {
 		assert(front.type == Socket.Type.ROUTER);
 		assert(back.type == Socket.Type.DEALER);
