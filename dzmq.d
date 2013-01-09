@@ -14,6 +14,16 @@ import std.string : toStringz, format;
 import std.algorithm : canFind;
 /// @endcond
 
+void zmq_version(ref int major, ref int minor, ref int patch) {
+	return zmq.zmq_version(&major, &minor, &patch);
+}
+
+string zmq_version() {
+	int major, minor, patch;
+	zmq_version(major, minor, patch);
+	return "%s.%s.%s".format(major, minor, patch);
+}
+
 /** @brief ZeroMQ context manager
 Manages the context for all sockets within a thread
 */
@@ -26,10 +36,10 @@ class Context {
 	 * Create a 0MQ context to manage all sockets within a thread
 	 * @param io_threads Number of threads to use for the context
 	*/
-	@trusted this(int io_threads=0) {
+	this(int io_threads=0) {
 		this.context = zmq.zmq_init(io_threads);
 	}
-	@trusted ~this() {
+	~this() {
 		zmq.zmq_term(this.context);
 		context = null;
 	}
@@ -107,7 +117,7 @@ class Socket {
 		 * @param msg The message to unpack
 		 * @returns The stored string
 		*/
-		@trusted string msg_unpack(zmq.zmq_msg_t msg) {
+		string msg_unpack(zmq.zmq_msg_t msg) {
 			size_t i=zmq.zmq_msg_size(&msg);
 			string ret=cast(string)(zmq.zmq_msg_data(&msg)[0..i]).idup;
 			return ret;
@@ -115,13 +125,13 @@ class Socket {
 		
 		mixin template SocketOption(TYPE, string NAME, int VALUE) {
 			/// Setter
-			@property @trusted void SocketOption(TYPE value) {
+			@property void SocketOption(TYPE value) {
 				if(zmq.zmq_setsockopt(this.socket, VALUE, &value, TYPE.sizeof)) {
 					throw new ZMQException();
 				}
 			}
 			/// Getter
-			@property @trusted TYPE SocketOption() {
+			@property TYPE SocketOption() {
 				TYPE ret;
 				size_t size = TYPE.sizeof;
 				if(zmq.zmq_getsockopt(this.socket, VALUE, &ret, &size)) {
@@ -139,14 +149,14 @@ class Socket {
 	 * @param context The 0MQ context to use for the socket's creation
 	 * @param type The type of the socket
 	*/
-	@trusted this(Context context, Type type) {
+	this(Context context, Type type) {
 		socket = zmq.zmq_socket(context.raw, cast(int)type);
 		this._type = type;
 	}
 	/**
 	 * @brief Cleans up after a socket
 	*/
-	@trusted ~this() {
+	~this() {
 		zmq.zmq_close(this.socket);
 	}
 	
@@ -154,7 +164,7 @@ class Socket {
 	 * @brief Bind a socket to an address
 	 * @param addr The address to bind to
 	*/
-	@trusted void bind(string addr) {
+	void bind(string addr) {
 		if(zmq.zmq_bind (this.socket, addr.toStringz()) != 0) {
 			throw new ZMQException();
 		}
@@ -163,7 +173,7 @@ class Socket {
 	 * @brief Connect a socket to an address
 	 * @param endpoint The address to connect to
 	*/
-	@trusted void connect(string endpoint) {
+	void connect(string endpoint) {
 		if(zmq.zmq_connect(this.socket, endpoint.toStringz()) != 0) {
 			throw new ZMQException();
 		}
@@ -351,7 +361,7 @@ class Socket {
 	 * @brief Checks for more parts of a message
 	 * @returns True if there is another message part queued
 	*/
-	@property @trusted bool more() {
+	@property bool more() {
 		long ret;
 		size_t size = ret.sizeof;
 		if(zmq.zmq_getsockopt(this.socket, zmq.ZMQ_RCVMORE, &ret, &size)) {
@@ -382,7 +392,7 @@ class Socket {
 	 * @param topic The topic to subscribe to
 	 * @see http://api.zeromq.org/2-1:zmq-setsockopt#toc7
 	*/
-	@trusted void subscribe(string topic) {
+	void subscribe(string topic) {
 		if(zmq.zmq_setsockopt(this.socket, zmq.ZMQ_SUBSCRIBE, cast(void*)topic.toStringz(), topic.length)) {
 			throw new ZMQException();
 		}
@@ -394,7 +404,7 @@ class Socket {
 	 * @param topic The topic to unsubscribe from
 	 * @see http://api.zeromq.org/2-1:zmq-setsockopt#toc8
 	*/
-	@trusted void unsubscribe(string topic) {
+	void unsubscribe(string topic) {
 		if(zmq.zmq_setsockopt(this.socket, zmq.ZMQ_SUBSCRIBE, cast(void*)topic.toStringz(), topic.length)) {
 			throw new ZMQException();
 		}
@@ -505,7 +515,7 @@ public:
 	/**
 	 * Create and automatically initialize a ZMQException
 	*/
-	@trusted this() {
+	this() {
 		char* errmsg = zmq.zmq_strerror(zmq.zmq_errno ());
 		// Convert C string to D string
 		string msg = "";

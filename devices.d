@@ -52,7 +52,7 @@ private abstract class DZMQDevice : Device {
 		this.back = back;
 		this.type = type;
 	}
-	@trusted final void run() {
+	final void run() {
 		if(this.type != Type.CUSTOM) {
 			static if(zmq.ZMQ_VERSION_MAJOR == 2) {
 				// 0MQ version 2 supports devices, but they're gone in 3
