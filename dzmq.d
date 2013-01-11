@@ -217,9 +217,10 @@ class Socket {
 		zmq.zmq_msg_t zmsg;
 		zmq.zmq_msg_init(&zmsg);
 		scope(exit) zmq.zmq_msg_close(&zmsg);
+
 		auto err = zmq.zmq_recv(this.socket, &zmsg, flags);
 		string ret = msg_unpack(zmsg);
-		if(flags&Flags.NOBLOCK && zmq.zmq_errno() == EAGAIN) {
+		if(flags&Flags.NOBLOCK && err == -1 && zmq.zmq_errno() == EAGAIN) {
 			return null;
 		} else if(err == -1) {
 			throw new ZMQException();
@@ -234,11 +235,15 @@ class Socket {
 	 * @returns All data strings in the message
 	*/
 	string[] recv_multipart(int flags=0) {
-		string[] parts = [];
-		do {
+		auto pack = this.recv(flags);
+		if(flags&Flags.NOBLOCK && pack==null) {
+			return null;
+		}
+		string[] parts = [pack];
+		while(this.more) {
 			parts ~= this.recv(flags);
-		} while(this.more);
-		return (parts[0] is null)?null:parts;
+		}
+		return parts;
 	}
 	
 	/** @name High water mark
