@@ -128,7 +128,7 @@ class Socket {
 		mixin template SocketOption(TYPE, string NAME, int VALUE) {
 			/// Setter
 			@property void SocketOption(TYPE value) {
-				if(zmq.zmq_setsockopt(this.socket, VALUE, &value, TYPE.sizeof) != -1) {
+				if(zmq.zmq_setsockopt(this.socket, VALUE, &value, TYPE.sizeof) == -1) {
 					throw new ZMQException();
 				}
 			}
@@ -136,7 +136,7 @@ class Socket {
 			@property TYPE SocketOption() {
 				TYPE ret;
 				size_t size = TYPE.sizeof;
-				if(zmq.zmq_getsockopt(this.socket, VALUE, &ret, &size) != -1) {
+				if(zmq.zmq_getsockopt(this.socket, VALUE, &ret, &size) == -1) {
 					throw new ZMQException();
 				} else {
 					return ret;
@@ -341,21 +341,19 @@ class Socket {
 	*/
 	/// Setter
 	@property void identity(string value) {
-		if(zmq.zmq_setsockopt(this.socket, zmq.ZMQ_IDENTITY, cast(void*)value.toStringz(), value.length) != -1) {
+		if(zmq.zmq_setsockopt(this.socket, zmq.ZMQ_IDENTITY, cast(void*)value.toStringz(), value.length) == -1) {
 			throw new ZMQException();
 		}
 	}
 	/// Getter
 	@property string identity() {
-		string ret;
 		size_t size=256;
 		char[256] data;
 		auto err = zmq.zmq_getsockopt(this.socket, zmq.ZMQ_IDENTITY, data.ptr, &size);
-		if(err != -1) {
+		if(err == -1) {
 			throw new ZMQException();
 		} else {
-			ret = data[0..size].idup;
-			return ret;
+			return data[0..size].idup;
 		}
 	}
 	// @}
@@ -368,7 +366,7 @@ class Socket {
 	@property bool more() {
 		long ret;
 		size_t size = ret.sizeof;
-		if(zmq.zmq_getsockopt(this.socket, zmq.ZMQ_RCVMORE, &ret, &size) != -1) {
+		if(zmq.zmq_getsockopt(this.socket, zmq.ZMQ_RCVMORE, &ret, &size) == -1) {
 			throw new ZMQException();
 		} else {
 			return ret != 0;
@@ -397,7 +395,7 @@ class Socket {
 	 * @see http://api.zeromq.org/2-1:zmq-setsockopt#toc7
 	*/
 	void subscribe(string topic) {
-		if(zmq.zmq_setsockopt(this.socket, zmq.ZMQ_SUBSCRIBE, cast(void*)topic.toStringz(), topic.length) != -1) {
+		if(zmq.zmq_setsockopt(this.socket, zmq.ZMQ_SUBSCRIBE, cast(void*)topic.toStringz(), topic.length) == -1) {
 			throw new ZMQException();
 		}
 	}
@@ -409,7 +407,7 @@ class Socket {
 	 * @see http://api.zeromq.org/2-1:zmq-setsockopt#toc8
 	*/
 	void unsubscribe(string topic) {
-		if(zmq.zmq_setsockopt(this.socket, zmq.ZMQ_SUBSCRIBE, cast(void*)topic.toStringz(), topic.length) != -1) {
+		if(zmq.zmq_setsockopt(this.socket, zmq.ZMQ_SUBSCRIBE, cast(void*)topic.toStringz(), topic.length) == -1) {
 			throw new ZMQException();
 		}
 	}
