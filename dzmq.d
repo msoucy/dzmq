@@ -10,6 +10,7 @@ module metus.dzmq.dzmq;
 /// @cond NoDoc
 package import zmq = deimos.zmq.zmq;
 
+import core.stdc.errno;
 import std.string : toStringz, format;
 import std.algorithm : canFind;
 /// @endcond
@@ -217,6 +218,9 @@ class Socket {
 		scope(exit) zmq.zmq_msg_close(&zmsg);
 		auto err = zmq.zmq_recv(this.socket, &zmsg, flags);
 		string ret = msg_unpack(zmsg);
+		if(flags&Flags.NOBLOCK && err == EAGAIN) {
+			ret=null;
+		}
 		if(err != 0) {
 			throw new ZMQException();
 		} else {
@@ -234,7 +238,7 @@ class Socket {
 		do {
 			parts ~= this.recv(flags);
 		} while(this.more);
-		return parts;
+		return (parts[0] is null)?null:parts;
 	}
 	
 	/** @name High water mark
@@ -515,8 +519,10 @@ public:
 	/**
 	 * Create and automatically initialize a ZMQException
 	*/
+	const int errno;
 	this() {
-		char* errmsg = zmq.zmq_strerror(zmq.zmq_errno ());
+		errno = zmq.zmq_errno();
+		char* errmsg = zmq.zmq_strerror(this.errno);
 		// Convert C string to D string
 		string msg = "";
 		char* tmp = errmsg;
