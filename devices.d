@@ -1,9 +1,10 @@
-/** @file devices.d
-@brief D ZeroMQ device classes
-@authors Matthew Soucy <msoucy@csh.rit.edu>
-@date May 9, 2012
-@todo Look into using templates with Device.Type instead of separate classes
-*/
+/**
+ * @file devices.d
+ * @brief D ZeroMQ device classes
+ * @author Matthew Soucy <msoucy@csh.rit.edu>
+ * @date May 9, 2012
+ * @todo Look into using templates with Device.Type instead of separate classes
+ */
 ///D ZeroMQ device classes
 module metus.dzmq.devices;
 
@@ -13,9 +14,10 @@ import metus.dzmq.dzmq;
 /// @endcond
 
 /**
- * @brief Interface for all devices
+ * Interface for all devices
+ *
  * A device connects two related sockets, and is typically used for transferring data along a chain.
-*/
+ */
 interface Device {
 	/// Type of device
 	immutable enum Type {
@@ -29,10 +31,10 @@ interface Device {
 	    CUSTOM,
 	}
 	/**
-	 * @brief Run a ZMQ Device
-	 * 
+	 * Run a ZMQ Device
+	 *
 	 * This action will block until the device's context is destroyed or the function terminates.
-	*/
+	 */
 	void run();
 }
 
@@ -46,12 +48,17 @@ private abstract class DZMQDevice : Device {
 	 * @param front Frontend socket
 	 * @param back Backend socket
 	 * @param type Type of the device
-	*/
+	 */
 	@safe nothrow this(Socket front, Socket back, Type type=Type.CUSTOM) {
 		this.front = front;
 		this.back = back;
 		this.type = type;
 	}
+	/**
+	 * Perform the main Device operation
+	 *
+	 * Starts the Device to transfer data
+	 */
 	final void run() {
 		if(this.type != Type.CUSTOM) {
 			static if(zmq.ZMQ_VERSION_MAJOR == 2) {
@@ -75,14 +82,17 @@ final class StreamerDevice : DZMQDevice {
 	 * Create a Streamer device to pull data from one socket and push it out another
 	 * @param front A PULL-type socket
 	 * @param back A PUSH-type socket
-	*/
+	 */
 	@safe nothrow this(Socket front, Socket back)
 	in {
 		assert(front.type == Socket.Type.PULL);
 		assert(back.type == Socket.Type.PUSH);
-	} body {
+	}
+	/// @cond NoDoc
+	body {
 		super(front, back, Type.STREAMER);
 	}
+	/// @endcond
 }
 
 /// Wrapper for a Forwarder device
@@ -91,30 +101,36 @@ final class ForwarderDevice : DZMQDevice {
 	 * Create a Forwarder device to subscribe to certain topics and publish them on another socket
 	 * @param front A SUB-type socket
 	 * @param back A PUB-type socket
-	*/
+	 */
 	@safe nothrow this(Socket front, Socket back)
 	in {
 		assert(front.type == Socket.Type.SUB);
 		assert(back.type == Socket.Type.PUB);
-	} body {
+	}
+	/// @cond NoDoc
+	body {
 		super(front, back, Type.FORWARDER);
 	}
+	/// @endcond
 }
 
 /// Wrapper for a Queue device
 final class QueueDevice : DZMQDevice {
 	/**
 	 * Create a Queue device.
-	 * 
+	 *
 	 * This interfaces with REQ-REP sockets
 	 * @param front A SUB-type socket
 	 * @param back A PUB-type socket
-	*/
+	 */
 	@safe nothrow this(Socket front, Socket back)
 	in {
 		assert(front.type == Socket.Type.ROUTER);
 		assert(back.type == Socket.Type.DEALER);
-	} body {
+	}
+	/// @cond NoDoc
+	body {
 		super(front, back, Type.QUEUE);
 	}
+	/// @endcond
 }
