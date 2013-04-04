@@ -504,7 +504,7 @@ private:
 
 public:
 	/// Wrap all socket functions
-	alias this = sock;
+	alias sock this;
 
 	/**
 	 * Creates and initializes a socket
