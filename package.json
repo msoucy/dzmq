@@ -1,0 +1,11 @@
+{
+	"name": "dzmq",
+	"description": "High-level D bindings for ZeroMQ",
+	"homepage": "http://github.com/msoucy/dzmq",
+	"copyright": "Copyright © 2012, Matt Soucy",
+	"authors": [
+		"Matt Soucy"
+	],
+	"dependencies": {
+	}
+}
